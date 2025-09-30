@@ -107,6 +107,14 @@ export class Urlbox implements INodeType {
 				default: true,
 				description: 'Whether to download the rendered output as a binary file instead of returning a URL',
 			},
+			{
+				displayName: 'Additional Options (JSON)',
+				name: 'additionalOptions',
+				type: 'json',
+				default: '{}',
+				description: 'Additional Urlbox API options as JSON (will be merged with template options)',
+				placeholder: '{ "width": 1920, "height": 1080, "delay": 2000 }',
+			},
 		],
 	};
 
@@ -116,11 +124,21 @@ export class Urlbox implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
+                // TODO remove typecasting where possible :)
 				const template = this.getNodeParameter('template', i) as string;
 				const url = this.getNodeParameter('url', i) as string;
 				const proxy = this.getNodeParameter('proxy', i) as string;
 				const cleanShot = this.getNodeParameter('cleanShot', i) as boolean;
 				const downloadAsFile = this.getNodeParameter('downloadAsFile', i) as boolean;
+
+				// Parse additional options JSON
+				const additionalOptionsParam = this.getNodeParameter('additionalOptions', i, '{}');
+				let additionalOptions = {};
+				if (typeof additionalOptionsParam !== 'object') {
+					additionalOptions = JSON.parse(additionalOptionsParam as string);
+				} else {
+					additionalOptions = additionalOptionsParam || additionalOptions;
+				}
 
                 type UrlboxOptions = {
                     url: string;
@@ -190,6 +208,9 @@ export class Urlbox implements INodeType {
 					options.hide_cookie_banners = true;
 					options.click_accept = true;
 				}
+
+				// Merge additional options (user-provided JSON overrides template defaults)
+				Object.assign(options, additionalOptions);
 
 				// If user wants to download as file, set response_type to binary
 				if (downloadAsFile) {
