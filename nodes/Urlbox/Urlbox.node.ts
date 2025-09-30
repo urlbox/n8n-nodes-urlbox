@@ -1,8 +1,9 @@
 import {
+    ApplicationError,
     IExecuteFunctions,
     type INodeExecutionData,
     type INodeType,
-    type INodeTypeDescription,
+    type INodeTypeDescription, NodeParameterValueType,
 } from 'n8n-workflow';
 
 export class Urlbox implements INodeType {
@@ -44,39 +45,39 @@ export class Urlbox implements INodeType {
 				type: 'options',
 				options: [
                     {
-                        name: 'Convert to MP4 (Screen Recording)',
-                        value: 'mp4',
-                        description: 'Record the website as MP4 video',
-                    },
-                    {
                         name: 'Convert to PDF',
                         value: 'pdf',
                         description: 'Convert the website to PDF',
                     },
 					{
-						name: 'Full Page Screenshot (PNG)',
+						name: 'Full Page Screenshot',
 						value: 'fullpage_png',
 						description: 'Capture the entire page as PNG',
 					},
                     {
-                        name: 'Mobile Screenshot (PNG)',
+                        name: 'Mobile Full Page Screenshot',
                         value: 'mobile_png',
-                        description: 'Capture a mobile view screenshot',
+                        description: 'Capture the entire page in mobile view as a PNG',
+                    },
+                    {
+                        name: 'Scrape HTML',
+                        value: 'scrape_html',
+                        description: 'Capture the HTML of a page',
+                    },
+                    {
+                        name: 'Scrape Markdown',
+                        value: 'scrape_markdown',
+                        description: 'Capture the Markdown of a page',
                     },
                     {
                         name: 'Smooth Scrolling Video',
                         value: 'scrolling_video',
-                        description: 'Records the website as a full page video, scrolling smoothly down the page',
+                        description: 'Records the website as a full page MP4, scrolling smoothly down the page',
                     },
                     {
 						name: 'Take Screenshot (PNG)',
 						value: 'screenshot_png',
 						description: 'Capture a standard PNG screenshot',
-					},
-					{
-						name: 'Thumbnail Screenshot (JPG)',
-						value: 'thumbnail_jpg',
-						description: 'Capture a thumbnail JPG screenshot',
 					},
 				],
 				default: 'screenshot_png',
@@ -87,10 +88,20 @@ export class Urlbox implements INodeType {
 				name: 'url',
 				type: 'string',
 				default: '',
-				required: true,
 				description: 'The website URL to render',
 				placeholder: 'https://example.com',
 			},
+            {
+                displayName: 'HTML',
+                name: 'html',
+                type: 'string',
+                typeOptions: {
+                    editor: 'htmlEditor',
+                },
+                default: '',
+                description: 'The HTML to render if not a URL. Passing HTML here will overwrite any URL above.',
+                placeholder: '<h1> Hello, World! </h1>',
+            },
 			{
 				displayName: 'Proxy URL',
 				name: 'proxy',
@@ -124,7 +135,7 @@ export class Urlbox implements INodeType {
 				name: 'additionalOptions',
 				type: 'json',
 				default: '{}',
-				description: 'Additional Urlbox API options as JSON (will be merged with template options)',
+				description: 'Additional Urlbox API options as JSON (will overwrite any template options)',
 				placeholder: '{ "width": 1920, "height": 1080, "delay": 2000 }',
 			},
             {
@@ -142,25 +153,28 @@ export class Urlbox implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-                // TODO remove typecasting where possible :)
-				const template = this.getNodeParameter('template', i) as string;
-				const url = this.getNodeParameter('url', i) as string;
-				const proxy = this.getNodeParameter('proxy', i) as string;
-				const cleanShot = this.getNodeParameter('cleanShot', i) as boolean;
-				const downloadAsFile = this.getNodeParameter('downloadAsFile', i) as boolean;
+				const template = this.getNodeParameter('template', i);
+				const url = this.getNodeParameter('url', i);
+				const html = this.getNodeParameter('html', i);
+                const proxy = this.getNodeParameter('proxy', i);
+				const cleanShot = this.getNodeParameter('cleanShot', i);
+				const downloadAsFile = this.getNodeParameter('downloadAsFile', i);
 
 				// Parse additional options JSON
 				const additionalOptionsParam = this.getNodeParameter('additionalOptions', i, '{}');
 				let additionalOptions = {};
 				if (typeof additionalOptionsParam !== 'object') {
-					additionalOptions = JSON.parse(additionalOptionsParam as string);
+                    if (typeof additionalOptionsParam === "string") {
+                        additionalOptions = JSON.parse(additionalOptionsParam);
+                    }
 				} else {
 					additionalOptions = additionalOptionsParam || additionalOptions;
 				}
 
                 type UrlboxOptions = {
-                    url: string;
-                    format?: 'png' | 'jpg' | 'pdf' | 'mp4';
+                    url?: object | NodeParameterValueType;
+                    html?: object | NodeParameterValueType;
+                    format?: 'png' | 'md' | 'pdf' | 'mp4' | 'html';
                     full_page?: boolean;
                     device?: string;
                     block_ads?: boolean;
@@ -170,10 +184,13 @@ export class Urlbox implements INodeType {
                     user_agent?: string;
                     width?: number;
                     video_scroll?: boolean;
-                    proxy?: string;
+                    proxy?: object | NodeParameterValueType;
                 };
 
 				// Build options based on the template
+                if (!url && !html) {
+                    throw new ApplicationError('URL or HTML must be provided.')
+                }
 				const options: UrlboxOptions = { url };
 
 				// Extract format for later use
@@ -184,10 +201,14 @@ export class Urlbox implements INodeType {
 						options.format = 'png';
 						format = 'png';
 						break;
-					case 'thumbnail_jpg':
-						options.format = 'jpg';
-						format = 'jpg';
-						break;
+                    case 'scrape_markdown':
+                        options.format = 'md';
+                        format = 'md';
+                        break;
+                    case 'scrape_html':
+                        options.format = 'html';
+                        format = 'html';
+                        break;
 					case 'fullpage_png':
 						options.format = 'png';
 						options.full_page = true;
@@ -196,16 +217,13 @@ export class Urlbox implements INodeType {
 					case 'mobile_png':
 						options.format = 'png';
 						options.user_agent = 'mobile';
+                        options.full_page = true;
                         options.width = 375;
                         format = 'png';
 						break;
 					case 'pdf':
 						options.format = 'pdf';
 						format = 'pdf';
-						break;
-					case 'mp4':
-						options.format = 'mp4';
-						format = 'mp4';
 						break;
                     case 'scrolling_video':
                         options.format = 'mp4';
@@ -215,35 +233,28 @@ export class Urlbox implements INodeType {
                         break;
 				}
 
-				// Apply proxy if provided
 				if (proxy) {
 					options.proxy = proxy;
 				}
 
-				// Apply clean shot options if enabled
 				if (cleanShot) {
 					options.block_ads = true;
 					options.hide_cookie_banners = true;
 					options.click_accept = true;
 				}
 
-				// Merge additional options (user-provided JSON overrides template defaults)
-				Object.assign(options, additionalOptions);
-
-				// If user wants to download as file, set response_type to binary
 				if (downloadAsFile) {
 					options.response_type = 'binary';
 				}
 
-				// Debug logging
-				console.log('=== Urlbox Node Debug ===');
-				console.log('Template:', template);
-				console.log('URL:', url);
-				console.log('Options:', JSON.stringify(options, null, 2));
-				console.log('Download as file:', downloadAsFile);
+                if (html) {
+                    options.html = html;
+                    options.url = undefined;
+                }
 
-				// Make API request
-				// const response = await this.helpers.requestWithAuthentication.call(
+                // LAST - Merge additional options (user-provided JSON overrides template defaults)
+                Object.assign(options, additionalOptions);
+
                 const response = await this.helpers.httpRequestWithAuthentication.call(
                     this,
                     'urlboxApi',
@@ -252,7 +263,6 @@ export class Urlbox implements INodeType {
                         url: 'https://api.urlbox.com/v1/render/sync',
                         body: options,
                         json: !downloadAsFile, // Don't parse as JSON if we expect binary
-                        // encoding: downloadAsFile ? null : undefined, // Get buffer for binary
                         encoding: downloadAsFile ? 'arraybuffer' : 'json', // Get buffer for binary
                     },
                 )
@@ -262,13 +272,15 @@ export class Urlbox implements INodeType {
 					// Response is binary data - prepare it as a file
 					const mimeTypes: Record<string, string> = {
 						png: 'image/png',
+                        html: 'text/html',
+                        md: 'text/markdown',
 						jpg: 'image/jpeg',
 						pdf: 'application/pdf',
 						mp4: 'video/mp4',
 					};
 
 					const binaryData = await this.helpers.prepareBinaryData(
-						response as Buffer,
+						response,
 						`urlbox-${template}.${format}`,
 						mimeTypes[format] || 'application/octet-stream',
 					);
@@ -281,7 +293,7 @@ export class Urlbox implements INodeType {
 				} else {
 					// Response is JSON with renderUrl
 					returnData.push({
-						json: response as any,
+						json: response,
 						pairedItem: { item: i },
 					});
 				}
@@ -293,10 +305,8 @@ export class Urlbox implements INodeType {
 					});
 					continue;
 				}
-                console.log("error")
                 console.error(error.message)
-                // throw new NodeOperationError()
-				// throw new NodeOperationError(this, error as Error, { itemIndex: i });
+                throw error;
 			}
 		}
 
