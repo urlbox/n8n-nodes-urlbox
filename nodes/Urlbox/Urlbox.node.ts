@@ -32,6 +32,12 @@ export class Urlbox implements INodeType {
 			},
 		},
 		properties: [
+            {
+                displayName: 'Reliable, full page, AI-powered screenshots, PDFs, Videos and more. Visit <a href="https://urlbox.com" target="_blank">Urlbox</a> for more information.',
+                name: 'notice',
+                type: 'notice',
+                default: '',
+            },
 			{
 				displayName: 'Template',
 				name: 'template',
@@ -107,6 +113,12 @@ export class Urlbox implements INodeType {
 				default: true,
 				description: 'Whether to download the rendered output as a binary file instead of returning a URL',
 			},
+            {
+                displayName: 'For full API documentation and advanced options you can pass as JSON, take a look at our <a href="https://urlbox.com/docs" target="_blank">Docs</a>.',
+                name: 'notice',
+                type: 'notice',
+                default: '',
+            },
 			{
 				displayName: 'Additional Options (JSON)',
 				name: 'additionalOptions',
@@ -115,6 +127,12 @@ export class Urlbox implements INodeType {
 				description: 'Additional Urlbox API options as JSON (will be merged with template options)',
 				placeholder: '{ "width": 1920, "height": 1080, "delay": 2000 }',
 			},
+            {
+                displayName: 'Need to take many screenshots at once? Try our new product <a href="https://capturedeck.com/" target="_blank">Capture Deck</a>.',
+                name: 'notice',
+                type: 'notice',
+                default: '',
+            },
 		],
 	};
 
