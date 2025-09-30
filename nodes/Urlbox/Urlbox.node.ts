@@ -8,9 +8,9 @@ import {
 
 export class Urlbox implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Urlbox',
+		displayName: 'Screenshots by Urlbox',
 		name: 'urlbox',
-		icon: 'file:urlbox.svg',
+		icon: 'file:../../icons/urlbox.svg',
 		group: ['transform'],
 		version: 1,
 		description: 'Generate screenshots, PDFs, and recordings of websites',
@@ -108,7 +108,7 @@ export class Urlbox implements INodeType {
 				type: 'string',
 				default: '',
 				description: 'Optional proxy URL to bypass regional blocking (e.g., socks5://user:pass@proxy.example.com:1080)',
-				placeholder: 'socks5://proxy.example.com:1080',
+				placeholder: 'brd-customer...:username@brd.superproxy.io:12345',
 			},
 			{
 				displayName: 'Clean Shot',

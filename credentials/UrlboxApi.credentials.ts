@@ -30,7 +30,6 @@ export class UrlboxApi implements ICredentialType {
 		type: 'generic',
 		properties: {
 			headers: {
-                // TODO why is there an equals here? is that an n8n convention?
 				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
 		},
