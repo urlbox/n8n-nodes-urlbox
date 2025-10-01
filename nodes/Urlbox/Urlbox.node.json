@@ -1,0 +1,20 @@
+{
+  "node": "n8n-nodes-base.urlbox",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": [
+    "Utility"
+  ],
+  "resources": {
+    "credentialDocumentation": [
+      {
+        "url": "https://urlbox.com/docs/api#authentication"
+      }
+    ],
+    "primaryDocumentation": [
+      {
+        "url": "https://urlbox.com/docs"
+      }
+    ]
+  }
+}

@@ -1,25 +1,26 @@
 {
     "name": "n8n-nodes-urlbox",
     "version": "0.1.0",
-    "description": "n8n community node for generating screenshots, PDFs, and recordings with Urlbox",
+    "description": "Urlbox's n8n community node for generating full page screenshots, converting to PDFs, and video recordings.",
     "license": "MIT",
-    "homepage": "https://github.com/urlbox/n8n-nodes-urlbox",
+    "homepage": "https://urlbox.com",
     "keywords": [
         "n8n-community-node-package",
-        "urlbox",
         "screenshot",
+        "scrape",
         "pdf",
         "video",
-        "automation"
+        "html"
     ],
     "author": {
-        "name": "Arnold Cubici-Jones",
-        "email": "108676317+AJCJ1@users.noreply.github.com"
+        "name": "Urlbox Ltd.",
+        "email": "support@urlbox.com"
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/urlbox/n8n-nodes-urlbox.git"
     },
+    "main": "index.js",
     "scripts": {
         "build": "n8n-node build",
         "build:watch": "tsc --watch",
@@ -43,7 +44,6 @@
     },
     "devDependencies": {
         "@n8n/node-cli": "*",
-        "@types/node": "^24.6.0",
         "eslint": "9.32.0",
         "prettier": "3.6.2",
         "release-it": "^19.0.4",

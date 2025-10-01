@@ -13,12 +13,13 @@ export class Urlbox implements INodeType {
 		icon: 'file:../../icons/urlbox.svg',
 		group: ['transform'],
 		version: 1,
-		description: 'Generate screenshots, PDFs, and recordings of websites',
+		description: 'Generate full page screenshots, video recordings, scrape HTML or Markdown, convert to PDF, and more.',
 		defaults: {
 			name: 'Urlbox',
 		},
 		inputs: ['main'],
 		outputs: ['main'],
+        usableAsTool: true,
 		credentials: [
 			{
 				name: 'urlboxApi',
@@ -33,12 +34,6 @@ export class Urlbox implements INodeType {
 			},
 		},
 		properties: [
-            {
-                displayName: 'Reliable, full page, AI-powered screenshots, PDFs, Videos and more. Visit <a href="https://urlbox.com" target="_blank">Urlbox</a> for more information.',
-                name: 'notice',
-                type: 'notice',
-                default: '',
-            },
 			{
 				displayName: 'Template',
 				name: 'template',
