@@ -18,7 +18,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/urlbox/n8n-nodes-urlbox.git"
+        "url": "git+https://github.com/urlbox/n8n-nodes-urlbox.git"
     },
     "main": "index.js",
     "scripts": {
@@ -53,6 +53,6 @@
         "n8n-workflow": "*"
     },
     "publishConfig": {
-      "access": "public"
+        "access": "public"
     }
 }
