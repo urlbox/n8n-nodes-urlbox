@@ -3,7 +3,7 @@ import {
     IExecuteFunctions,
     type INodeExecutionData,
     type INodeType,
-    type INodeTypeDescription, NodeParameterValueType,
+    type INodeTypeDescription, NodeParameterValueType, NodeConnectionTypes
 } from 'n8n-workflow';
 
 export class Urlbox implements INodeType {
@@ -17,8 +17,8 @@ export class Urlbox implements INodeType {
 		defaults: {
 			name: 'Urlbox',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
         usableAsTool: true,
 		credentials: [
 			{
@@ -26,57 +26,75 @@ export class Urlbox implements INodeType {
 				required: true,
 			},
 		],
-		requestDefaults: {
-			baseURL: 'https://api.urlbox.com/v1',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
 		properties: [
 			{
-				displayName: 'Template',
-				name: 'template',
+				displayName: 'Resource',
+				name: 'resource',
 				type: 'options',
+				noDataExpression: true,
 				options: [
-                    {
-                        name: 'Convert to PDF',
-                        value: 'pdf',
-                        description: 'Convert the website to PDF',
-                    },
+					{
+						name: 'Render',
+						value: 'render',
+					},
+				],
+				default: 'render',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['render'],
+					},
+				},
+				options: [
+					{
+						name: 'Convert to PDF',
+						value: 'pdf',
+						description: 'Convert the website to PDF',
+						action: 'Convert website to PDF',
+					},
 					{
 						name: 'Full Page Screenshot',
 						value: 'fullpage_png',
 						description: 'Capture the entire page as PNG',
+						action: 'Take full page screenshot',
 					},
-                    {
-                        name: 'Mobile Full Page Screenshot',
-                        value: 'mobile_png',
-                        description: 'Capture the entire page in mobile view as a PNG',
-                    },
-                    {
-                        name: 'Scrape HTML',
-                        value: 'scrape_html',
-                        description: 'Capture the HTML of a page',
-                    },
-                    {
-                        name: 'Scrape Markdown',
-                        value: 'scrape_markdown',
-                        description: 'Capture the Markdown of a page',
-                    },
-                    {
-                        name: 'Smooth Scrolling Video',
-                        value: 'scrolling_video',
-                        description: 'Records the website as a full page MP4, scrolling smoothly down the page',
-                    },
-                    {
+					{
+						name: 'Mobile Full Page Screenshot',
+						value: 'mobile_png',
+						description: 'Capture the entire page in mobile view as a PNG',
+						action: 'Take mobile full page screenshot',
+					},
+					{
+						name: 'Scrape HTML',
+						value: 'scrape_html',
+						description: 'Capture the HTML of a page',
+						action: 'Scrape HTML from page',
+					},
+					{
+						name: 'Scrape Markdown',
+						value: 'scrape_markdown',
+						description: 'Capture the Markdown of a page',
+						action: 'Scrape markdown from page',
+					},
+					{
+						name: 'Smooth Scrolling Video',
+						value: 'scrolling_video',
+						description: 'Records the website as a full page MP4, scrolling smoothly down the page',
+						action: 'Record smooth scrolling video',
+					},
+					{
 						name: 'Take Screenshot (PNG)',
 						value: 'screenshot_png',
 						description: 'Capture a standard PNG screenshot',
+						action: 'Take screenshot',
 					},
 				],
 				default: 'screenshot_png',
-				description: 'The type of render to perform',
 			},
 			{
 				displayName: 'URL',
@@ -148,7 +166,7 @@ export class Urlbox implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				const template = this.getNodeParameter('template', i);
+				const operation = this.getNodeParameter('operation', i);
 				const url = this.getNodeParameter('url', i);
 				const html = this.getNodeParameter('html', i);
                 const proxy = this.getNodeParameter('proxy', i);
@@ -191,7 +209,7 @@ export class Urlbox implements INodeType {
 				// Extract format for later use
 				let format = 'png';
 
-				switch (template) {
+				switch (operation) {
 					case 'screenshot_png':
 						options.format = 'png';
 						format = 'png';
@@ -276,7 +294,7 @@ export class Urlbox implements INodeType {
 
 					const binaryData = await this.helpers.prepareBinaryData(
 						response,
-						`urlbox-${template}.${format}`,
+						`urlbox-${operation}.${format}`,
 						mimeTypes[format] || 'application/octet-stream',
 					);
 
@@ -300,7 +318,6 @@ export class Urlbox implements INodeType {
 					});
 					continue;
 				}
-                console.error(error.message)
                 throw error;
 			}
 		}
