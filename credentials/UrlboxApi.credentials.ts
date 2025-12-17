@@ -11,7 +11,7 @@ export class UrlboxApi implements ICredentialType {
 
 	displayName = 'Urlbox API';
 
-	icon: Icon = 'file:urlbox.svg';
+	icon: Icon = 'file:../../icons/urlbox.svg';
 
 	documentationUrl = 'https://urlbox.com/docs/api#authentication';
 

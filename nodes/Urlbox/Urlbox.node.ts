@@ -104,38 +104,58 @@ export class Urlbox implements INodeType {
 				description: 'The website URL to render',
 				placeholder: 'https://example.com',
 			},
-            {
-                displayName: 'HTML',
-                name: 'html',
-                type: 'string',
-                typeOptions: {
-                    editor: 'htmlEditor',
-                },
-                default: '',
-                description: 'The HTML to render if not a URL. Passing HTML here will overwrite any URL above.',
-                placeholder: '<h1> Hello, World! </h1>',
-            },
 			{
-				displayName: 'Proxy URL',
-				name: 'proxy',
-				type: 'string',
-				default: '',
-				description: 'Optional proxy URL to bypass regional blocking (e.g., socks5://user:pass@proxy.example.com:1080)',
-				placeholder: 'brd-customer...:username@brd.superproxy.io:12345',
-			},
-			{
-				displayName: 'Clean Shot',
-				name: 'cleanShot',
-				type: 'boolean',
-				default: true,
-				description: 'Whether to hide any ads, cookie banners, and auto-accept cookie consent prompts',
-			},
-			{
-				displayName: 'Download As File',
-				name: 'downloadAsFile',
-				type: 'boolean',
-				default: true,
-				description: 'Whether to download the rendered output as a binary file instead of returning a URL',
+				displayName: 'Additional Options',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {
+					cleanShot: true,
+					downloadAsFile: true
+				},
+				options: [
+					{
+						displayName: 'Clean Shot',
+						name: 'cleanShot',
+						type: 'boolean',
+						default: true,
+						description: 'Whether to hide any ads, cookie banners, and auto-accept cookie consent prompts',
+					},
+					{
+						displayName: 'Custom Options (JSON)',
+						name: 'customOptions',
+						type: 'json',
+						default: '{}',
+						description: 'Additional Urlbox API options as JSON (will overwrite any template options)',
+						placeholder: '{ "width": 1920, "height": 1080, "delay": 2000 }',
+					},
+					{
+						displayName: 'Download As File',
+						name: 'downloadAsFile',
+						type: 'boolean',
+						default: true,
+						description: 'Whether to download the rendered output as a binary file instead of returning a URL',
+					},
+					{
+						displayName: 'Render HTML Content',
+						name: 'html',
+						type: 'string',
+						typeOptions: {
+							editor: 'htmlEditor',
+						},
+						default: '',
+						description: 'The HTML to render if not a URL. Passing HTML here will overwrite any URL above.',
+						placeholder: '<h1> Hello, World! </h1>',
+					},
+					{
+						displayName: 'Use a Proxy Server',
+						name: 'proxy',
+						type: 'string',
+						default: '',
+						description: 'Optional proxy URL to bypass regional blocking (e.g., socks5://user:pass@proxy.example.com:1080)',
+						placeholder: 'brd-customer...:username@brd.superproxy.io:12345',
+					},
+				],
 			},
             {
                 displayName: 'For full API documentation and advanced options you can pass as JSON, take a look at our <a href="https://urlbox.com/docs" target="_blank">Docs</a>.',
@@ -143,17 +163,9 @@ export class Urlbox implements INodeType {
                 type: 'notice',
                 default: '',
             },
-			{
-				displayName: 'Additional Options (JSON)',
-				name: 'additionalOptions',
-				type: 'json',
-				default: '{}',
-				description: 'Additional Urlbox API options as JSON (will overwrite any template options)',
-				placeholder: '{ "width": 1920, "height": 1080, "delay": 2000 }',
-			},
             {
                 displayName: 'Need to take many screenshots at once? Try our new product <a href="https://capturedeck.com/" target="_blank">Capture Deck</a>.',
-                name: 'notice',
+                name: 'captureDeckNotice',
                 type: 'notice',
                 default: '',
             },
@@ -168,18 +180,24 @@ export class Urlbox implements INodeType {
 			try {
 				const operation = this.getNodeParameter('operation', i);
 				const url = this.getNodeParameter('url', i);
-				const html = this.getNodeParameter('html', i);
-                const proxy = this.getNodeParameter('proxy', i);
-				const cleanShot = this.getNodeParameter('cleanShot', i);
-				const downloadAsFile = this.getNodeParameter('downloadAsFile', i);
+				const additionalFields = this.getNodeParameter('additionalFields', i, {}) as {
+					html?: string;
+					proxy?: string;
+					cleanShot?: boolean;
+					downloadAsFile?: boolean;
+					additionalOptions?: string | object;
+				};
+
+				const html = additionalFields.html;
+				const proxy = additionalFields.proxy;
+				const cleanShot = additionalFields.cleanShot !== undefined ? additionalFields.cleanShot : true;
+				const downloadAsFile = additionalFields.downloadAsFile !== undefined ? additionalFields.downloadAsFile : true;
 
 				// Parse additional options JSON
-				const additionalOptionsParam = this.getNodeParameter('additionalOptions', i, '{}');
+				const additionalOptionsParam = additionalFields.additionalOptions || '{}';
 				let additionalOptions = {};
 				if (typeof additionalOptionsParam !== 'object') {
-                    if (typeof additionalOptionsParam === "string") {
-                        additionalOptions = JSON.parse(additionalOptionsParam);
-                    }
+					additionalOptions = JSON.parse(additionalOptionsParam);
 				} else {
 					additionalOptions = additionalOptionsParam || additionalOptions;
 				}
