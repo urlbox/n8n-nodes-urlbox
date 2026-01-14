@@ -1,6 +1,6 @@
 {
     "name": "@urlbox/n8n-nodes-urlbox",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Urlbox's n8n community node for generating full page screenshots, converting to PDFs, and video recordings.",
     "license": "MIT",
     "homepage": "https://urlbox.com",
