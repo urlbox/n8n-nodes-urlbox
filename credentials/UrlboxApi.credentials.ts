@@ -17,8 +17,8 @@ export class UrlboxApi implements ICredentialType {
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'API Key',
-			name: 'apiKey',
+			displayName: 'Secret Key',
+			name: 'secretKey',
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
@@ -30,7 +30,7 @@ export class UrlboxApi implements ICredentialType {
 		type: 'generic',
 		properties: {
 			headers: {
-				Authorization: '=Bearer {{$credentials.apiKey}}',
+				Authorization: '=Bearer {{$credentials.secretKey}}',
 			},
 		},
 	};
