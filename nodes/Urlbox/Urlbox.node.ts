@@ -3,7 +3,8 @@ import {
     IExecuteFunctions,
     type INodeExecutionData,
     type INodeType,
-    type INodeTypeDescription, NodeParameterValueType, NodeConnectionTypes
+    type INodeTypeDescription, NodeParameterValueType, NodeConnectionTypes,
+    NodeOperationError,
 } from 'n8n-workflow';
 
 export class Urlbox implements INodeType {
@@ -185,7 +186,7 @@ export class Urlbox implements INodeType {
 					proxy?: string;
 					cleanShot?: boolean;
 					downloadAsFile?: boolean;
-					additionalOptions?: string | object;
+					customOptions?: string | object;
 				};
 
 				const html = additionalFields.html;
@@ -193,13 +194,29 @@ export class Urlbox implements INodeType {
 				const cleanShot = additionalFields.cleanShot !== undefined ? additionalFields.cleanShot : true;
 				const downloadAsFile = additionalFields.downloadAsFile !== undefined ? additionalFields.downloadAsFile : true;
 
-				// Parse additional options JSON
-				const additionalOptionsParam = additionalFields.additionalOptions || '{}';
-				let additionalOptions = {};
-				if (typeof additionalOptionsParam !== 'object') {
-					additionalOptions = JSON.parse(additionalOptionsParam);
-				} else {
-					additionalOptions = additionalOptionsParam || additionalOptions;
+				// Parse the "Custom Options (JSON)" field. n8n can hand it over as a
+				// JSON string or as an already-parsed object.
+				let customOptions: Record<string, unknown> = {};
+				const customOptionsParam = additionalFields.customOptions;
+				if (typeof customOptionsParam === 'string' && customOptionsParam.trim() !== '') {
+					try {
+						customOptions = JSON.parse(customOptionsParam);
+					} catch (error) {
+						throw new NodeOperationError(
+							this.getNode(),
+							`Custom Options (JSON) is not valid JSON: ${error.message}`,
+							{ itemIndex: i },
+						);
+					}
+				} else if (customOptionsParam && typeof customOptionsParam === 'object') {
+					customOptions = customOptionsParam as Record<string, unknown>;
+				}
+				if (!customOptions || typeof customOptions !== 'object' || Array.isArray(customOptions)) {
+					throw new NodeOperationError(
+						this.getNode(),
+						'Custom Options (JSON) must be a JSON object, e.g. { "width": 1920 }',
+						{ itemIndex: i },
+					);
 				}
 
                 type UrlboxOptions = {
@@ -283,8 +300,8 @@ export class Urlbox implements INodeType {
                     options.url = undefined;
                 }
 
-                // LAST - Merge additional options (user-provided JSON overrides template defaults)
-                Object.assign(options, additionalOptions);
+                // LAST - Merge custom options (user-provided JSON overrides template defaults)
+                Object.assign(options, customOptions);
 
                 const response = await this.helpers.httpRequestWithAuthentication.call(
                     this,
